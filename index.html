@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClotheMu - Super Deals on Fashion</title>
+    <link rel="stylesheet" href="temu-home.css">
+    <script async src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@0.0.10/dist/face-api.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-left">
+            👗 StyleMatch
+        </div>
+        <div class="header-center">
+            <input type="text" class="search-bar" placeholder="Search style tips...">
+        </div>
+        <div class="header-right">
+            <button class="icon-btn" onclick="showAbout()">ℹ️</button>
+            <button class="icon-btn" onclick="openCamera()">📷</button>
+        </div>
+    </header>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Take Your Photo</h2>
+                <span class="close" onclick="closeCamera()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <video id="cameraVideo" playsinline></video>
+                <canvas id="captureCanvas" style="display: none;"></canvas>
+                <div class="camera-info">
+                    <p>📸 Take a selfie to get personalized clothing recommendations based on your appearance!</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeCamera()">Cancel</button>
+                <button class="btn-primary" onclick="capturePhoto()">📸 Capture</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Analysis Modal -->
+    <div id="analysisModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Your Style Profile</h2>
+                <span class="close" onclick="closeAnalysis()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <img id="capturedPhoto" style="max-width: 100%; border-radius: 8px; margin-bottom: 15px;">
+                <div id="styleProfile" class="style-profile">
+                    <h3>Detected Style Traits:</h3>
+                    <div id="profileDetails"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAnalysis()">Back</button>
+                <button class="btn-primary" onclick="generateRecommendations()">🎯 Get Recommendations</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Sale Banner -->
+    <div class="flash-sale">
+        <span>⚡ FLASH SALE - UP TO 80% OFF</span>
+        <div class="flash-timer" id="timer">23:45:32</div>
+    </div>
+
+    <!-- Gamification Section -->
+    <div class="gamification">
+        <div class="game-card" onclick="alert('Daily bonus claimed! +100 coins')">
+            <div class="game-icon">🎁</div>
+            <div class="game-text">Daily Bonus</div>
+        </div>
+        <div class="game-card" onclick="alert('Spin the wheel!')">
+            <div class="game-icon">🎡</div>
+            <div class="game-text">Spin & Win</div>
+        </div>
+        <div class="game-card" onclick="alert('Complete tasks for rewards!')">
+            <div class="game-icon">✅</div>
+            <div class="game-text">Task Center</div>
+        </div>
+    </div>
+
+    <!-- Top Deals Banner -->
+    <div class="banner-section">
+        <div class="banner-title">🌟 How StyleMatch Works</div>
+        <div class="banners">
+            <span class="banner-item">📷 Take Photo</span>
+            <span class="banner-item">🔍 Analyze Style</span>
+            <span class="banner-item">🎯 Get Recommendations</span>
+            <span class="banner-item">👔 Find Perfect Fits</span>
+        </div>
+    </div>
+
+    <!-- Recommendations Section -->
+    <div class="recommendations-intro">
+        <div class="intro-card">
+            <h2>Welcome to StyleMatch</h2>
+            <p>Discover clothing recommendations tailored to your unique style and appearance.</p>
+            <button class="btn-large" onclick="openCamera()">📷 Take Your Photo</button>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="categories">
+        <button class="category-btn active" onclick="filterCategory('all')">All</button>
+        <button class="category-btn" onclick="filterCategory('casual')">👕 Casual</button>
+        <button class="category-btn" onclick="filterCategory('formal')">🎩 Formal</button>
+        <button class="category-btn" onclick="filterCategory('sporty')">⚽ Sporty</button>
+        <button class="category-btn" onclick="filterCategory('evening')">✨ Evening</button>
+        <button class="category-btn" onclick="filterCategory('accessories')">👜 Accessories</button>
+    </div>
+
+    <!-- Products Container (Now Recommendations) -->
+    <div class="products-container">
+        <div id="recommendationsSection">
+            <div class="empty-state">
+                <div class="empty-icon">📷</div>
+                <h3>No Recommendations Yet</h3>
+                <p>Take a photo to get personalized clothing recommendations!</p>
+            </div>
+        </div>
+        <div class="products-grid" id="productsGrid" style="display: none;">
+            <!-- Recommendations will be loaded here -->
+        </div>
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <div class="spinner"></div>
+            <div class="spinner"></div>
+            Generating recommendations...
+        </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+        <div class="tab active" onclick="switchTab('home')">
+            <span>🏠</span>
+            <span class="tab-label">Home</span>
+        </div>
+        <div class="tab" onclick="switchTab('camera')">
+            <span>📷</span>
+            <span class="tab-label">Camera</span>
+        </div>
+        <div class="tab" onclick="switchTab('tips')">
+            <span>💡</span>
+            <span class="tab-label">Tips</span>
+        </div>
+        <div class="tab" onclick="switchTab('account')">
+            <span>👤</span>
+            <span class="tab-label">Account</span>
+        </div>
+    </div>
+
+    <script src="temu-home.js"></script>
+</body>
+</html>
